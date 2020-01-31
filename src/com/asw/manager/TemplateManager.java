@@ -1,14 +1,16 @@
 package com.asw.manager;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.LogManager;
-import java.util.logging.Logger;
 
 import com.asw.exceptions.InvalidParamException;
+import com.asw.exceptions.ReportFailedException;
 import com.asw.exceptions.TemplateNotFoundException;
 
 import net.sf.jasperreports.engine.JREmptyDataSource;
@@ -31,10 +33,12 @@ public class TemplateManager {
 	 * Name of the jasper jrmxl template
 	 */
 	String template;
+	String exportFileName;
 	Map<String,Object> params;
 	
-	public TemplateManager(String template) {
+	public TemplateManager(String template, String exportFileName) {
 		this.template=template;
+		this.exportFileName=exportFileName;
 	}
 	
 	public TemplateManager(String template, Map<String,Object> fillParams) {
@@ -154,9 +158,11 @@ public class TemplateManager {
 	 * Generate an object of type JasperReport from the template name
 	 * @return
 	 * @throws JRException
+	 * @throws FileNotFoundException 
 	 */
-	public JasperReport generateReport() throws JRException{
-		final InputStream reportInputStream = getClass().getResourceAsStream(this.template);
+	public JasperReport generateReport() throws JRException, FileNotFoundException{
+		//final InputStream reportInputStream = getClass().getResourceAsStream(this.template);
+		final InputStream reportInputStream = new FileInputStream(new File("C:/SampleTemplate.jrxml"));
 		JasperDesign jasperDesign = null;
 		try {
 			jasperDesign = JRXmlLoader.load(reportInputStream);
@@ -180,6 +186,32 @@ public class TemplateManager {
 			return JasperExportManager.exportReportToPdf(jasperPrint);
 		}catch(Exception ex) {
 			return null;
+		}
+	}
+	
+	public void exportReportToFile(Object bean) throws ReportFailedException{
+		ReportDataWrapper reportDataWrapper = new ReportDataWrapper(bean);
+		try {
+			JasperReport jasperReport = this.generateReport();
+			JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, reportDataWrapper.castDataSource(bean),new JREmptyDataSource());
+			JasperExportManager.exportReportToPdfFile(jasperPrint, "C:");
+		}catch(Exception ex) {
+			throw new ReportFailedException();
+		}
+	}
+	
+	/**
+	 * Export pdf file to local storage
+	 * @param bean
+	 * @throws ReportFailedException
+	 */
+	public void exportReportToFile(Map<String,Object> bean) throws ReportFailedException{
+		try {
+			JasperReport jasperReport = this.generateReport();
+			JasperPrint jasperPrint = JasperFillManager.fillReport(jasperReport, bean,new JREmptyDataSource());
+			JasperExportManager.exportReportToPdfFile(jasperPrint, this.exportFileName+".pdf");
+		}catch(Exception ex) {
+			throw new ReportFailedException();
 		}
 	}
 

@@ -9,6 +9,11 @@
         <artifactId>jasperreports</artifactId>
         <version>6.0.0</version>
   	</dependency>
+  	<dependency>
+    <groupId>org.olap4j</groupId>
+    <artifactId>olap4j</artifactId>
+    <version>1.2.0</version>
+</dependency>
   </dependencies>
   <build>
     <sourceDirectory>src</sourceDirectory>
